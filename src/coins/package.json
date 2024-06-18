@@ -1,0 +1,8 @@
+{
+  "name": "coins",
+  "version": "1.0.0",
+  "description": "Coins microservice",
+  "main": "get.js",
+  "author": "Nahuel Daima",
+  "license": "MIT"
+}

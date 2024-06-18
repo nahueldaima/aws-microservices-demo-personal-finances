@@ -1,0 +1,8 @@
+{
+  "name": "transactions",
+  "version": "1.0.0",
+  "description": "Transactions microservice",
+  "main": "filter.js",
+  "author": "Nahuel Daima",
+  "license": "MIT"
+}

@@ -1,0 +1,2017 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: 'your-domain-name.com'
+
+Globals:
+  Api:
+    Domain:
+      DomainName: your-domain-name.com
+      CertificateArn: your-certificate-arn
+    Auth:
+      DefaultAuthorizer: lambdaAuthorizer
+      AddDefaultAuthorizerToCorsPreflight: False #this prevent the auth being added to options
+      Authorizers:
+        lambdaAuthorizer:
+          FunctionArn: !Sub arn:aws:lambda:us-east-1:xxxxxxxxxxxx:function:yourAuthCustomFunction
+          Identity:
+            Header: authorizationToken
+#            ValidationExpression: \bbearer [a-zA-Z0-9]{128}\b
+            ReauthorizeEvery: 3600
+  Function:
+    Runtime: nodejs18.x
+    Timeout: 180
+    MemorySize: 128
+    Environment:
+      Variables:
+        NODE_ENV: develop
+        SECRETS_MANAGER_NAME: yourSecretManagerName
+    Tags:
+      ENVIRONMENT: develop
+
+Parameters:
+  AppId:
+    Type: String
+
+Resources:
+  # API Gateway
+  financesAPI:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: your-domain-name.com
+      StageName: Develop
+      EndpointConfiguration: REGIONAL
+      MethodSettings:
+        - DataTraceEnabled: "true"
+          LoggingLevel: INFO
+          ResourcePath: "/*" # allows for logging on any resource
+          HttpMethod: "*" # allows for logging on any method
+          MetricsEnabled: "true"
+      TracingEnabled: true
+      DefinitionBody:
+        swagger: "2.0"
+        info:
+          version: "1.0.0"
+          title: your-domain-name.com
+        paths:
+          /auth/login:
+            post:
+              responses:
+                "200":
+                  description: "200 response"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+              security:
+                - NONE: [ ] # this is to skip authentication
+              x-amazon-apigateway-integration:
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiAuthLoginDevelop.Arn}/invocations
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                passthroughBehavior: "when_no_match"
+                httpMethod: "POST"
+                type: "aws"
+            options:
+              consumes:
+                - application/json
+              produces:
+                - application/json
+              responses:
+                "200":
+                  description: '200 response'
+                  schema:
+                    $ref: '#/definitions/Empty'
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+                    Access-Control-Allow-Methods:
+                      type: string
+                    Access-Control-Allow-Headers:
+                      type: string
+              security:
+                - NONE: [ ]
+              x-amazon-apigateway-integration:
+                responses:
+                  default:
+                    statusCode: 200
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Methods: "'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,authorizationToken'"
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                passthroughBehavior: when_no_match
+                type: mock
+          /coins/:
+            post:
+              responses:
+                "200":
+                  description: "200 response"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+              x-amazon-apigateway-integration:
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiCoinsCreateDevelop.Arn}/invocations
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                passthroughBehavior: "when_no_match"
+                httpMethod: "POST"
+                type: "aws_proxy"
+            get:
+              responses:
+                "200":
+                  description: "200 response"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+              x-amazon-apigateway-integration:
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiCoinsGetDevelop.Arn}/invocations
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                passthroughBehavior: "when_no_match"
+                httpMethod: "POST"
+                type: "aws_proxy"
+            options:
+              consumes:
+                - application/json
+              produces:
+                - application/json
+              responses:
+                "200":
+                  description: '200 response'
+                  schema:
+                    $ref: '#/definitions/Empty'
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+                    Access-Control-Allow-Methods:
+                      type: string
+                    Access-Control-Allow-Headers:
+                      type: string
+              security:
+                - NONE: [ ]
+              x-amazon-apigateway-integration:
+                responses:
+                  default:
+                    statusCode: 200
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Methods: "'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,authorizationToken'"
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                passthroughBehavior: when_no_match
+                type: mock
+          /coins/exchange/latest:
+            get:
+              responses:
+                "200":
+                  description: "200 response"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+              x-amazon-apigateway-integration:
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiCoinsLatestExchangeDevelop.Arn}/invocations
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                passthroughBehavior: "when_no_match"
+                httpMethod: "POST"
+                type: "aws_proxy"
+            options:
+              consumes:
+                - application/json
+              produces:
+                - application/json
+              responses:
+                "200":
+                  description: '200 response'
+                  schema:
+                    $ref: '#/definitions/Empty'
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+                    Access-Control-Allow-Methods:
+                      type: string
+                    Access-Control-Allow-Headers:
+                      type: string
+              security:
+                - NONE: [ ]
+              x-amazon-apigateway-integration:
+                responses:
+                  default:
+                    statusCode: 200
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Methods: "'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,authorizationToken'"
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                passthroughBehavior: when_no_match
+                type: mock
+          /coins/exchange/monthly:
+            get:
+              responses:
+                "200":
+                  description: "200 response"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+              x-amazon-apigateway-integration:
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiCoinsUpdateRatesDevelop.Arn}/invocations
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                passthroughBehavior: "when_no_match"
+                httpMethod: "POST"
+                type: "aws_proxy"
+            options:
+              consumes:
+                - application/json
+              produces:
+                - application/json
+              responses:
+                "200":
+                  description: '200 response'
+                  schema:
+                    $ref: '#/definitions/Empty'
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+                    Access-Control-Allow-Methods:
+                      type: string
+                    Access-Control-Allow-Headers:
+                      type: string
+              security:
+                - NONE: [ ]
+              x-amazon-apigateway-integration:
+                responses:
+                  default:
+                    statusCode: 200
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Methods: "'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,authorizationToken'"
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                passthroughBehavior: when_no_match
+                type: mock
+          /balances/:
+            post:
+              responses:
+                "200":
+                  description: "200 response"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+              x-amazon-apigateway-integration:
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiBalancesDevelop.Arn}/invocations
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                passthroughBehavior: "when_no_match"
+                httpMethod: "POST"
+                type: "aws_proxy"
+            options:
+              consumes:
+                - application/json
+              produces:
+                - application/json
+              responses:
+                "200":
+                  description: '200 response'
+                  schema:
+                    $ref: '#/definitions/Empty'
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+                    Access-Control-Allow-Methods:
+                      type: string
+                    Access-Control-Allow-Headers:
+                      type: string
+              security:
+                - NONE: [ ]
+              x-amazon-apigateway-integration:
+                responses:
+                  default:
+                    statusCode: 200
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Methods: "'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,authorizationToken'"
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                passthroughBehavior: when_no_match
+                type: mock
+          /balances/stash:
+            post:
+              responses:
+                "200":
+                  description: "200 response"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+              x-amazon-apigateway-integration:
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiBalanceByStashOrEconomyDevelop.Arn}/invocations
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                passthroughBehavior: "when_no_match"
+                httpMethod: "POST"
+                type: "aws_proxy"
+            options:
+              consumes:
+                - application/json
+              produces:
+                - application/json
+              responses:
+                "200":
+                  description: '200 response'
+                  schema:
+                    $ref: '#/definitions/Empty'
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+                    Access-Control-Allow-Methods:
+                      type: string
+                    Access-Control-Allow-Headers:
+                      type: string
+              security:
+                - NONE: [ ]
+              x-amazon-apigateway-integration:
+                responses:
+                  default:
+                    statusCode: 200
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Methods: "'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,authorizationToken'"
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                passthroughBehavior: when_no_match
+                type: mock
+          /balances/categories:
+            post:
+              responses:
+                "200":
+                  description: "200 response"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+              x-amazon-apigateway-integration:
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${BalanceByCategoriesDevelop.Arn}/invocations
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                passthroughBehavior: "when_no_match"
+                httpMethod: "POST"
+                type: "aws_proxy"
+            options:
+              consumes:
+                - application/json
+              produces:
+                - application/json
+              responses:
+                "200":
+                  description: '200 response'
+                  schema:
+                    $ref: '#/definitions/Empty'
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+                    Access-Control-Allow-Methods:
+                      type: string
+                    Access-Control-Allow-Headers:
+                      type: string
+              security:
+                - NONE: [ ]
+              x-amazon-apigateway-integration:
+                responses:
+                  default:
+                    statusCode: 200
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Methods: "'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,authorizationToken'"
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                passthroughBehavior: when_no_match
+                type: mock
+          /economies/:
+            post:
+              responses:
+                "200":
+                  description: "200 response"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+              x-amazon-apigateway-integration:
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiEconomiesCreateDevelop.Arn}/invocations
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                passthroughBehavior: "when_no_match"
+                httpMethod: "POST"
+                type: "aws_proxy"
+            get:
+              responses:
+                "200":
+                  description: "200 response"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+              x-amazon-apigateway-integration:
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiEconomiesGetAllDevelop.Arn}/invocations
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                passthroughBehavior: "when_no_match"
+                httpMethod: "POST"
+                type: "aws_proxy"
+            options:
+              consumes:
+                - application/json
+              produces:
+                - application/json
+              responses:
+                "200":
+                  description: '200 response'
+                  schema:
+                    $ref: '#/definitions/Empty'
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+                    Access-Control-Allow-Methods:
+                      type: string
+                    Access-Control-Allow-Headers:
+                      type: string
+              security:
+                - NONE: [ ]
+              x-amazon-apigateway-integration:
+                responses:
+                  default:
+                    statusCode: 200
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Methods: "'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,authorizationToken'"
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                passthroughBehavior: when_no_match
+                type: mock
+          /stashes/:
+            post:
+              responses:
+                "200":
+                  description: "200 response"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+              x-amazon-apigateway-integration:
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiStashesCreateDevelop.Arn}/invocations
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                passthroughBehavior: "when_no_match"
+                httpMethod: "POST"
+                type: "aws_proxy"
+            put:
+              responses:
+                "200":
+                  description: "200 response"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+              x-amazon-apigateway-integration:
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiStashesEditDevelop.Arn}/invocations
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                passthroughBehavior: "when_no_match"
+                httpMethod: "POST"
+                type: "aws_proxy"
+            get:
+              responses:
+                "200":
+                  description: "200 response"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+              x-amazon-apigateway-integration:
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiStashesGetAllDevelop.Arn}/invocations
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                passthroughBehavior: "when_no_match"
+                httpMethod: "POST"
+                type: "aws_proxy"
+            options:
+              consumes:
+                - application/json
+              produces:
+                - application/json
+              responses:
+                "200":
+                  description: '200 response'
+                  schema:
+                    $ref: '#/definitions/Empty'
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+                    Access-Control-Allow-Methods:
+                      type: string
+                    Access-Control-Allow-Headers:
+                      type: string
+              security:
+                - NONE: [ ]
+              x-amazon-apigateway-integration:
+                responses:
+                  default:
+                    statusCode: 200
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Methods: "'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,authorizationToken'"
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                passthroughBehavior: when_no_match
+                type: mock
+          /stashes/categories/:
+            post:
+              responses:
+                "200":
+                  description: "200 response"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+              x-amazon-apigateway-integration:
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiStashesCategoriesCreateDevelop.Arn}/invocations
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                passthroughBehavior: "when_no_match"
+                httpMethod: "POST"
+                type: "aws_proxy"
+            put:
+              responses:
+                "200":
+                  description: "200 response"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+              x-amazon-apigateway-integration:
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiStashesCategoriesEditDevelop.Arn}/invocations
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                passthroughBehavior: "when_no_match"
+                httpMethod: "POST"
+                type: "aws_proxy"
+            get:
+              responses:
+                "200":
+                  description: "200 response"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+              x-amazon-apigateway-integration:
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiStashesCategoriesGetAllDevelop.Arn}/invocations
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                passthroughBehavior: "when_no_match"
+                httpMethod: "POST"
+                type: "aws_proxy"
+            options:
+              consumes:
+                - application/json
+              produces:
+                - application/json
+              responses:
+                "200":
+                  description: '200 response'
+                  schema:
+                    $ref: '#/definitions/Empty'
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+                    Access-Control-Allow-Methods:
+                      type: string
+                    Access-Control-Allow-Headers:
+                      type: string
+              security:
+                - NONE: [ ]
+              x-amazon-apigateway-integration:
+                responses:
+                  default:
+                    statusCode: 200
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Methods: "'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,authorizationToken'"
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                passthroughBehavior: when_no_match
+                type: mock
+          /transactions/:
+            post:
+              responses:
+                "200":
+                  description: "200 response"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+              x-amazon-apigateway-integration:
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiTransactionsCreateDevelop.Arn}/invocations
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                passthroughBehavior: "when_no_match"
+                httpMethod: "POST"
+                type: "aws_proxy"
+            put:
+              responses:
+                "200":
+                  description: "200 response"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+              x-amazon-apigateway-integration:
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiTransactionsUpdateDevelop.Arn}/invocations
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                passthroughBehavior: "when_no_match"
+                httpMethod: "POST"
+                type: "aws_proxy"
+            options:
+              consumes:
+                - application/json
+              produces:
+                - application/json
+              responses:
+                "200":
+                  description: '200 response'
+                  schema:
+                    $ref: '#/definitions/Empty'
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+                    Access-Control-Allow-Methods:
+                      type: string
+                    Access-Control-Allow-Headers:
+                      type: string
+              security:
+                - NONE: [ ]
+              x-amazon-apigateway-integration:
+                responses:
+                  default:
+                    statusCode: 200
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Methods: "'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,authorizationToken'"
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                passthroughBehavior: when_no_match
+                type: mock
+          /transactions/batch:
+            post:
+              responses:
+                "200":
+                  description: "200 response"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+              x-amazon-apigateway-integration:
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiTransactionsBatchCreateDevelop.Arn}/invocations
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                passthroughBehavior: "when_no_match"
+                httpMethod: "POST"
+                type: "aws_proxy"
+            options:
+              consumes:
+                - application/json
+              produces:
+                - application/json
+              responses:
+                "200":
+                  description: '200 response'
+                  schema:
+                    $ref: '#/definitions/Empty'
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+                    Access-Control-Allow-Methods:
+                      type: string
+                    Access-Control-Allow-Headers:
+                      type: string
+              security:
+                - NONE: [ ]
+              x-amazon-apigateway-integration:
+                responses:
+                  default:
+                    statusCode: 200
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Methods: "'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,authorizationToken'"
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                passthroughBehavior: when_no_match
+                type: mock
+          /transactions/filter:
+            post:
+              responses:
+                "200":
+                  description: "200 response"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+              x-amazon-apigateway-integration:
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiTransactionsFilterDevelop.Arn}/invocations
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                passthroughBehavior: "when_no_match"
+                httpMethod: "POST"
+                type: "aws_proxy"
+            options:
+              consumes:
+                - application/json
+              produces:
+                - application/json
+              responses:
+                "200":
+                  description: '200 response'
+                  schema:
+                    $ref: '#/definitions/Empty'
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+                    Access-Control-Allow-Methods:
+                      type: string
+                    Access-Control-Allow-Headers:
+                      type: string
+              security:
+                - NONE: [ ]
+              x-amazon-apigateway-integration:
+                responses:
+                  default:
+                    statusCode: 200
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Methods: "'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,authorizationToken'"
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                passthroughBehavior: when_no_match
+                type: mock
+          /transactions/categories:
+            post:
+              responses:
+                "200":
+                  description: "200 response"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+              x-amazon-apigateway-integration:
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiTransactionsCategoriesCreateDevelop.Arn}/invocations
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                passthroughBehavior: "when_no_match"
+                httpMethod: "POST"
+                type: "aws_proxy"
+            put:
+              responses:
+                "200":
+                  description: "200 response"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+              x-amazon-apigateway-integration:
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiTransactionsCategoriesEditDevelop.Arn}/invocations
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                passthroughBehavior: "when_no_match"
+                httpMethod: "POST"
+                type: "aws_proxy"
+            options:
+              consumes:
+                - application/json
+              produces:
+                - application/json
+              responses:
+                "200":
+                  description: '200 response'
+                  schema:
+                    $ref: '#/definitions/Empty'
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+                    Access-Control-Allow-Methods:
+                      type: string
+                    Access-Control-Allow-Headers:
+                      type: string
+              security:
+                - NONE: [ ]
+              x-amazon-apigateway-integration:
+                responses:
+                  default:
+                    statusCode: 200
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Methods: "'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,authorizationToken'"
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                passthroughBehavior: when_no_match
+                type: mock
+          /transactions/categories/filter:
+            post:
+              responses:
+                "200":
+                  description: "200 response"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+              x-amazon-apigateway-integration:
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiTransactionsCategoriesFilterDevelop.Arn}/invocations
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                passthroughBehavior: "when_no_match"
+                httpMethod: "POST"
+                type: "aws_proxy"
+            options:
+              consumes:
+                - application/json
+              produces:
+                - application/json
+              responses:
+                "200":
+                  description: '200 response'
+                  schema:
+                    $ref: '#/definitions/Empty'
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+                    Access-Control-Allow-Methods:
+                      type: string
+                    Access-Control-Allow-Headers:
+                      type: string
+              security:
+                - NONE: [ ]
+              x-amazon-apigateway-integration:
+                responses:
+                  default:
+                    statusCode: 200
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Methods: "'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,authorizationToken'"
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                passthroughBehavior: when_no_match
+                type: mock
+          /transactions/categories/groups:
+            post:
+              responses:
+                "200":
+                  description: "200 response"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+              x-amazon-apigateway-integration:
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiTransactionsCategoriesGroupsCreateDevelop.Arn}/invocations
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                passthroughBehavior: "when_no_match"
+                httpMethod: "POST"
+                type: "aws_proxy"
+            put:
+              responses:
+                "200":
+                  description: "200 response"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+              x-amazon-apigateway-integration:
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiTransactionsCategoriesGroupsEditDevelop.Arn}/invocations
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                passthroughBehavior: "when_no_match"
+                httpMethod: "POST"
+                type: "aws_proxy"
+            options:
+              consumes:
+                - application/json
+              produces:
+                - application/json
+              responses:
+                "200":
+                  description: '200 response'
+                  schema:
+                    $ref: '#/definitions/Empty'
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+                    Access-Control-Allow-Methods:
+                      type: string
+                    Access-Control-Allow-Headers:
+                      type: string
+              security:
+                - NONE: [ ]
+              x-amazon-apigateway-integration:
+                responses:
+                  default:
+                    statusCode: 200
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Methods: "'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,authorizationToken'"
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                passthroughBehavior: when_no_match
+                type: mock
+          /transactions/categories/groups/filter:
+            post:
+              responses:
+                "200":
+                  description: "200 response"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+              x-amazon-apigateway-integration:
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiTransactionsCategoriesGroupsFilterDevelop.Arn}/invocations
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                passthroughBehavior: "when_no_match"
+                httpMethod: "POST"
+                type: "aws_proxy"
+            options:
+              consumes:
+                - application/json
+              produces:
+                - application/json
+              responses:
+                "200":
+                  description: '200 response'
+                  schema:
+                    $ref: '#/definitions/Empty'
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+                    Access-Control-Allow-Methods:
+                      type: string
+                    Access-Control-Allow-Headers:
+                      type: string
+              security:
+                - NONE: [ ]
+              x-amazon-apigateway-integration:
+                responses:
+                  default:
+                    statusCode: 200
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Methods: "'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,authorizationToken'"
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                passthroughBehavior: when_no_match
+                type: mock
+          /transactions/transfers:
+            post:
+              responses:
+                "200":
+                  description: "200 response"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+              x-amazon-apigateway-integration:
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiTransactionsTransfersCreateDevelop.Arn}/invocations
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                passthroughBehavior: "when_no_match"
+                httpMethod: "POST"
+                type: "aws_proxy"
+            options:
+              consumes:
+                - application/json
+              produces:
+                - application/json
+              responses:
+                "200":
+                  description: '200 response'
+                  schema:
+                    $ref: '#/definitions/Empty'
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+                    Access-Control-Allow-Methods:
+                      type: string
+                    Access-Control-Allow-Headers:
+                      type: string
+              security:
+                - NONE: [ ]
+              x-amazon-apigateway-integration:
+                responses:
+                  default:
+                    statusCode: 200
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Methods: "'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,authorizationToken'"
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                passthroughBehavior: when_no_match
+                type: mock
+          /transactions/transfers/filter:
+            post:
+              responses:
+                "200":
+                  description: "200 response"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+              x-amazon-apigateway-integration:
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiTransactionsTransfersFilterDevelop.Arn}/invocations
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                passthroughBehavior: "when_no_match"
+                httpMethod: "POST"
+                type: "aws_proxy"
+            options:
+              consumes:
+                - application/json
+              produces:
+                - application/json
+              responses:
+                "200":
+                  description: '200 response'
+                  schema:
+                    $ref: '#/definitions/Empty'
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+                    Access-Control-Allow-Methods:
+                      type: string
+                    Access-Control-Allow-Headers:
+                      type: string
+              security:
+                - NONE: [ ]
+              x-amazon-apigateway-integration:
+                responses:
+                  default:
+                    statusCode: 200
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Methods: "'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,authorizationToken'"
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                passthroughBehavior: when_no_match
+                type: mock
+          /users:
+            post:
+              responses:
+                "200":
+                  description: "200 response"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+              x-amazon-apigateway-integration:
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiUsersCreateDevelop.Arn}/invocations
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                passthroughBehavior: "when_no_match"
+                httpMethod: "POST"
+                type: "aws_proxy"
+            options:
+              consumes:
+                - application/json
+              produces:
+                - application/json
+              responses:
+                "200":
+                  description: '200 response'
+                  schema:
+                    $ref: '#/definitions/Empty'
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+                    Access-Control-Allow-Methods:
+                      type: string
+                    Access-Control-Allow-Headers:
+                      type: string
+              security:
+                - NONE: [ ]
+              x-amazon-apigateway-integration:
+                responses:
+                  default:
+                    statusCode: 200
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Methods: "'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,authorizationToken'"
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                passthroughBehavior: when_no_match
+                type: mock
+          /users/one:
+            get:
+              responses:
+                "200":
+                  description: "200 response"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+              x-amazon-apigateway-integration:
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiUsersGetOneDevelop.Arn}/invocations
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                passthroughBehavior: "when_no_match"
+                httpMethod: "POST"
+                type: "aws_proxy"
+            options:
+              consumes:
+                - application/json
+              produces:
+                - application/json
+              responses:
+                "200":
+                  description: '200 response'
+                  schema:
+                    $ref: '#/definitions/Empty'
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+                    Access-Control-Allow-Methods:
+                      type: string
+                    Access-Control-Allow-Headers:
+                      type: string
+                    authorizationToken:
+                      type: string
+              security:
+                - NONE: [ ]
+              x-amazon-apigateway-integration:
+                responses:
+                  default:
+                    statusCode: 200
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Methods: "'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,authorizationToken'"
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                passthroughBehavior: when_no_match
+                type: mock
+          /users/first-time:
+            post:
+              responses:
+                "200":
+                  description: "200 response"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+              x-amazon-apigateway-integration:
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ApiUsersFirstTimeDevelop.Arn}/invocations
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                passthroughBehavior: "when_no_match"
+                httpMethod: "POST"
+                type: "aws_proxy"
+            options:
+              consumes:
+                - application/json
+              produces:
+                - application/json
+              responses:
+                "200":
+                  description: '200 response'
+                  schema:
+                    $ref: '#/definitions/Empty'
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+                    Access-Control-Allow-Methods:
+                      type: string
+                    Access-Control-Allow-Headers:
+                      type: string
+              security:
+                - NONE: [ ]
+              x-amazon-apigateway-integration:
+                responses:
+                  default:
+                    statusCode: 200
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Methods: "'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,authorizationToken'"
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                passthroughBehavior: when_no_match
+                type: mock
+        definitions:
+          Empty:
+            type: object
+            title: Empty Schema
+        securityDefinitions:
+          NONE:
+            type: basic
+
+  #################################
+  # Lambda Functions #
+  #################################
+  # Lambdas without Auth
+  ApiAuthLoginDevelop:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/auth/
+      FunctionName: ApiAuthLoginDevelop
+      Handler: login.lambdaHandler
+      Runtime: nodejs18.x
+      MemorySize: 128
+      Timeout: 180
+      Layers:
+        - !Ref sharedDependenciesLayer
+      Events:
+        ApiAuthLoginDevelop:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: financesAPI
+            Path: /auth/login
+            Method: POST
+      Role: !Sub arn:aws:iam::XXXXXXXXXXX:role/api..com
+  # Lambdas with Auth
+  ApiCoinsCreateDevelop:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/coins/
+      FunctionName: ApiCoinsCreateDevelop
+      Handler: create.lambdaHandler
+      Runtime: nodejs18.x
+      MemorySize: 128
+      Timeout: 180
+      Layers:
+        - !Ref sharedDependenciesLayer
+      Events:
+        ApiCoinsCreateDevelop:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: financesAPI
+            Path: /coins/
+            Method: POST
+            Auth:
+              Authorizers: lambdaAuthorizer
+      Role: !Sub arn:aws:iam::XXXXXXXXXXX:role/api..com
+  ApiCoinsUpdateRatesDevelop:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/coins/
+      FunctionName: ApiCoinsUpdateRatesDevelop
+      Handler: updateRates.lambdaHandler
+      Runtime: nodejs18.x
+      MemorySize: 128
+      Timeout: 360
+      Layers:
+        - !Ref sharedDependenciesLayer
+      Role: !Sub arn:aws:iam::XXXXXXXXXXX:role/api..com
+  ApiBalancesDevelop:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/balances/
+      FunctionName: ApiBalancesDevelop
+      Handler: balanceTransactions.lambdaHandler
+      Runtime: nodejs18.x
+      MemorySize: 128
+      Timeout: 180
+      Layers:
+        - !Ref sharedDependenciesLayer
+      Events:
+        ApiBalanceByStashOrEconomyDevelop:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: financesAPI
+            Path: /balances/
+            Method: POST
+            Auth:
+              Authorizers: lambdaAuthorizer
+      Role: !Sub arn:aws:iam::XXXXXXXXXXX:role/api..com
+  ApiBalanceByStashOrEconomyDevelop:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/balances/
+      FunctionName: ApiBalanceByStashOrEconomyDevelop
+      Handler: balanceTransactionsByStashOrEconomy.lambdaHandler
+      Runtime: nodejs18.x
+      MemorySize: 128
+      Timeout: 180
+      Layers:
+        - !Ref sharedDependenciesLayer
+      Events:
+        ApiBalanceByStashOrEconomyDevelop:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: financesAPI
+            Path: /balances/stash
+            Method: POST
+            Auth:
+              Authorizers: lambdaAuthorizer
+      Role: !Sub arn:aws:iam::XXXXXXXXXXX:role/api..com
+  BalanceByCategoriesDevelop:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/balances/
+      FunctionName: BalanceByCategoriesDevelop
+      Handler: balanceTransactionsByCategories.lambdaHandler
+      Runtime: nodejs18.x
+      MemorySize: 128
+      Timeout: 180
+      Layers:
+        - !Ref sharedDependenciesLayer
+      Events:
+        BalanceByCategoriesDevelop:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: financesAPI
+            Path: /balances/categories
+            Method: POST
+            Auth:
+              Authorizers: lambdaAuthorizer
+      Role: !Sub arn:aws:iam::XXXXXXXXXXX:role/api..com
+  ApiCoinsGetDevelop:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/coins/
+      FunctionName: ApiCoinsGetDevelop
+      Handler: get.lambdaHandler
+      Runtime: nodejs18.x
+      MemorySize: 128
+      Timeout: 180
+      Layers:
+        - !Ref sharedDependenciesLayer
+      Events:
+        ApiCoinsGetDevelop:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: financesAPI
+            Path: /coins/
+            Method: GET
+            Auth:
+              Authorizers: lambdaAuthorizer
+      Role: !Sub arn:aws:iam::XXXXXXXXXXX:role/api..com
+  ApiCoinsLatestExchangeDevelop:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/coins/
+      FunctionName: ApiCoinsLatestExchangeDevelop
+      Handler: latestExchange.lambdaHandler
+      Runtime: nodejs18.x
+      MemorySize: 128
+      Timeout: 360
+      Layers:
+        - !Ref sharedDependenciesLayer
+      Events:
+        ApiCoinsLatestExchangeDevelop:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: financesAPI
+            Path: /coins/exchange/latest
+            Method: GET
+            Auth:
+              Authorizers: lambdaAuthorizer
+      Role: !Sub arn:aws:iam::XXXXXXXXXXX:role/api..com
+  ApiEconomiesCreateDevelop:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/economies/
+      FunctionName: ApiEconomiesCreateDevelop
+      Handler: create.lambdaHandler
+      Runtime: nodejs18.x
+      MemorySize: 128
+      Timeout: 180
+      Layers:
+        - !Ref sharedDependenciesLayer
+      Events:
+        ApiEconomiesCreateDevelop:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: financesAPI
+            Path: /economies/
+            Method: POST
+            Auth:
+              Authorizers: lambdaAuthorizer
+      Role: !Sub arn:aws:iam::XXXXXXXXXXX:role/api..com
+  ApiEconomiesGetAllDevelop:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/economies/
+      FunctionName: ApiEconomiesGetAllDevelop
+      Handler: getAll.lambdaHandler
+      Runtime: nodejs18.x
+      MemorySize: 128
+      Timeout: 180
+      Layers:
+        - !Ref sharedDependenciesLayer
+      Events:
+        ApiEconomiesGetAllDevelop:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: financesAPI
+            Path: /economies/
+            Method: GET
+            Auth:
+              Authorizers: lambdaAuthorizer
+      Role: !Sub arn:aws:iam::XXXXXXXXXXX:role/api..com
+  ApiStashesCreateDevelop:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/stashes/
+      FunctionName: ApiStashesCreateDevelop
+      Handler: create.lambdaHandler
+      Runtime: nodejs18.x
+      MemorySize: 128
+      Timeout: 180
+      Layers:
+        - !Ref sharedDependenciesLayer
+      Events:
+        ApiStashesCreateDevelop:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: financesAPI
+            Path: /stashes/
+            Method: POST
+            Auth:
+              Authorizers: lambdaAuthorizer
+      Role: !Sub arn:aws:iam::XXXXXXXXXXX:role/api..com
+  ApiStashesEditDevelop:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/stashes/
+      FunctionName: ApiStashesEditDevelop
+      Handler: edit.lambdaHandler
+      Runtime: nodejs18.x
+      MemorySize: 128
+      Timeout: 180
+      Layers:
+        - !Ref sharedDependenciesLayer
+      Events:
+        ApiStashesEditDevelop:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: financesAPI
+            Path: /stashes/
+            Method: PUT
+            Auth:
+              Authorizers: lambdaAuthorizer
+      Role: !Sub arn:aws:iam::XXXXXXXXXXX:role/api..com
+  ApiStashesGetAllDevelop:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/stashes/
+      Handler: getAll.lambdaHandler
+      FunctionName: ApiStashesGetAllDevelop
+      Runtime: nodejs18.x
+      MemorySize: 128
+      Timeout: 180
+      Layers:
+        - !Ref sharedDependenciesLayer
+      Events:
+        ApiStashesGetAllDevelop:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: financesAPI
+            Path: /stashes/
+            Method: GET
+            Auth:
+              Authorizers: lambdaAuthorizer
+      Role: !Sub arn:aws:iam::XXXXXXXXXXX:role/api..com
+  ApiStashesCategoriesCreateDevelop:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/stashesCategories/
+      FunctionName: ApiStashesCategoriesCreateDevelop
+      Handler: create.lambdaHandler
+      Runtime: nodejs18.x
+      MemorySize: 128
+      Timeout: 180
+      Layers:
+        - !Ref sharedDependenciesLayer
+      Events:
+        ApiStashesCategoriesCreateDevelop:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: financesAPI
+            Path: /stashes/categories/
+            Method: POST
+            Auth:
+              Authorizers: lambdaAuthorizer
+      Role: !Sub arn:aws:iam::XXXXXXXXXXX:role/api..com
+  ApiStashesCategoriesEditDevelop:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/stashesCategories/
+      FunctionName: ApiStashesCategoriesEditDevelop
+      Handler: edit.lambdaHandler
+      Runtime: nodejs18.x
+      MemorySize: 128
+      Timeout: 180
+      Layers:
+        - !Ref sharedDependenciesLayer
+      Events:
+        ApiStashesCategoriesEditDevelop:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: financesAPI
+            Path: /stashes/categories/
+            Method: PUT
+            Auth:
+              Authorizers: lambdaAuthorizer
+      Role: !Sub arn:aws:iam::XXXXXXXXXXX:role/api..com
+  ApiStashesCategoriesGetAllDevelop:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/stashesCategories/
+      FunctionName: ApiStashesCategoriesGetAllDevelop
+      Handler: getAll.lambdaHandler
+      Runtime: nodejs18.x
+      MemorySize: 128
+      Timeout: 180
+      Layers:
+        - !Ref sharedDependenciesLayer
+      Events:
+        ApiStashesCategoriesGetAllDevelop:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: financesAPI
+            Path: /stashes/categories
+            Method: GET
+            Auth:
+              Authorizers: lambdaAuthorizer
+      Role: !Sub arn:aws:iam::XXXXXXXXXXX:role/api..com
+  ApiTransactionsCreateDevelop:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/transactions/
+      FunctionName: ApiTransactionsCreateDevelop
+      Handler: create.lambdaHandler
+      Runtime: nodejs18.x
+      MemorySize: 512
+      Timeout: 180
+      Layers:
+        - !Ref sharedDependenciesLayer
+      Events:
+        ApiTransactionsCreateDevelop:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: financesAPI
+            Path: /transactions/
+            Method: POST
+            Auth:
+              Authorizers: lambdaAuthorizer
+      Role: !Sub arn:aws:iam::XXXXXXXXXXX:role/api..com
+  ApiTransactionsBatchCreateDevelop:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/transactions/
+      FunctionName: ApiTransactionsBatchCreateDevelop
+      Handler: batchCreate.lambdaHandler
+      Runtime: nodejs18.x
+      MemorySize: 512
+      Timeout: 180
+      Layers:
+        - !Ref sharedDependenciesLayer
+      Events:
+        ApiTransactionsBatchCreateDevelop:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: financesAPI
+            Path: /transactions/batch
+            Method: POST
+            Auth:
+              Authorizers: lambdaAuthorizer
+      Role: !Sub arn:aws:iam::XXXXXXXXXXX:role/api..com
+  ApiTransactionsUpdateDevelop:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/transactions/
+      FunctionName: ApiTransactionsUpdateDevelop
+      Handler: update.lambdaHandler
+      Runtime: nodejs18.x
+      MemorySize: 512
+      Timeout: 360
+      Layers:
+        - !Ref sharedDependenciesLayer
+      Events:
+        ApiTransactionsUpdateDevelop:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: financesAPI
+            Path: /transactions/
+            Method: PUT
+            Auth:
+              Authorizers: lambdaAuthorizer
+      Role: !Sub arn:aws:iam::XXXXXXXXXXX:role/api..com
+  ApiTransactionsFilterDevelop:
+      Type: AWS::Serverless::Function
+      Properties:
+        CodeUri: src/transactions
+        FunctionName: ApiTransactionsFilterDevelop
+        Handler: filter.lambdaHandler
+        Runtime: nodejs18.x
+        MemorySize: 512
+        Timeout: 180
+        Layers:
+          - !Ref sharedDependenciesLayer
+        Events:
+          ApiTransactionsFilterDevelop:
+            Type: Api
+            Properties:
+              RestApiId:
+                Ref: financesAPI
+              Path: /transactions/filter
+              Method: POST
+              Auth:
+                Authorizers: lambdaAuthorizer
+        Role: !Sub arn:aws:iam::XXXXXXXXXXX:role/api..com
+  ApiTransactionsTransfersCreateDevelop:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/transactionsTransfers/
+      FunctionName: ApiTransactionsTransfersCreateDevelop
+      Handler: create.lambdaHandler
+      Runtime: nodejs18.x
+      MemorySize: 128
+      Timeout: 180
+      Layers:
+        - !Ref sharedDependenciesLayer
+      Events:
+        ApiTransactionsTransfersCreateDevelop:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: financesAPI
+            Path: /transactions/transfers
+            Method: POST
+            Auth:
+              Authorizers: lambdaAuthorizer
+      Role: !Sub arn:aws:iam::XXXXXXXXXXX:role/api..com
+  ApiTransactionsTransfersFilterDevelop:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/transactionsTransfers
+      Handler: filter.lambdaHandler
+      FunctionName: ApiTransactionsTransfersFilterDevelop
+      Runtime: nodejs18.x
+      MemorySize: 128
+      Timeout: 180
+      Layers:
+        - !Ref sharedDependenciesLayer
+      Events:
+        ApiTransactionsTransfersFilterDevelop:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: financesAPI
+            Path: /transactions/transfers/filter
+            Method: POST
+            Auth:
+              Authorizers: lambdaAuthorizer
+      Role: !Sub arn:aws:iam::XXXXXXXXXXX:role/api..com
+  ApiTransactionsCategoriesCreateDevelop:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/transactionsCategories
+      FunctionName: ApiTransactionsCategoriesCreateDevelop
+      Handler: create.lambdaHandler
+      Runtime: nodejs18.x
+      MemorySize: 128
+      Timeout: 180
+      Layers:
+        - !Ref sharedDependenciesLayer
+      Events:
+        ApiTransactionsCategoriesCreateDevelop:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: financesAPI
+            Path: /transactions/categories/
+            Method: POST
+            Auth:
+              Authorizers: lambdaAuthorizer
+      Role: !Sub arn:aws:iam::XXXXXXXXXXX:role/api..com
+  ApiTransactionsCategoriesEditDevelop:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/transactionsCategories
+      FunctionName: ApiTransactionsCategoriesEditDevelop
+      Handler: edit.lambdaHandler
+      Runtime: nodejs18.x
+      MemorySize: 128
+      Timeout: 180
+      Layers:
+        - !Ref sharedDependenciesLayer
+      Events:
+        ApiTransactionsCategoriesEditDevelop:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: financesAPI
+            Path: /transactions/categories/
+            Method: PUT
+            Auth:
+              Authorizers: lambdaAuthorizer
+      Role: !Sub arn:aws:iam::XXXXXXXXXXX:role/api..com
+  ApiTransactionsCategoriesFilterDevelop:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/transactionsCategories
+      FunctionName: ApiTransactionsCategoriesFilterDevelop
+      Handler: filter.lambdaHandler
+      Runtime: nodejs18.x
+      MemorySize: 128
+      Timeout: 180
+      Layers:
+        - !Ref sharedDependenciesLayer
+      Events:
+        ApiTransactionsCategoriesFilterDevelop:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: financesAPI
+            Path: /transactions/categories/filter
+            Method: POST
+            Auth:
+              Authorizers: lambdaAuthorizer
+      Role: !Sub arn:aws:iam::XXXXXXXXXXX:role/api..com
+  ApiTransactionsCategoriesGroupsCreateDevelop:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/transactionsCategoriesGroups
+      FunctionName: ApiTransactionsCategoriesGroupsCreateDevelop
+      Handler: create.lambdaHandler
+      Runtime: nodejs18.x
+      MemorySize: 128
+      Timeout: 180
+      Layers:
+        - !Ref sharedDependenciesLayer
+      Events:
+        ApiTransactionsCategoriesGroupsCreateDevelop:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: financesAPI
+            Path: /transactions/categories/groups
+            Method: POST
+            Auth:
+              Authorizers: lambdaAuthorizer
+      Role: !Sub arn:aws:iam::XXXXXXXXXXX:role/api..com
+  ApiTransactionsCategoriesGroupsEditDevelop:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/transactionsCategoriesGroups
+      FunctionName: ApiTransactionsCategoriesGroupsEditDevelop
+      Handler: edit.lambdaHandler
+      Runtime: nodejs18.x
+      MemorySize: 128
+      Timeout: 180
+      Layers:
+        - !Ref sharedDependenciesLayer
+      Events:
+        ApiTransactionsCategoriesGroupsEditDevelop:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: financesAPI
+            Path: /transactions/categories/groups
+            Method: PUT
+            Auth:
+              Authorizers: lambdaAuthorizer
+      Role: !Sub arn:aws:iam::XXXXXXXXXXX:role/api..com
+  ApiTransactionsCategoriesGroupsFilterDevelop:
+      Type: AWS::Serverless::Function
+      Properties:
+        CodeUri: src/transactionsCategoriesGroups
+        FunctionName: ApiTransactionsCategoriesGroupsFilterDevelop
+        Handler: filter.lambdaHandler
+        Runtime: nodejs18.x
+        MemorySize: 128
+        Timeout: 180
+        Layers:
+          - !Ref sharedDependenciesLayer
+        Events:
+          ApiTransactionsCategoriesGroupsFilterDevelop:
+            Type: Api
+            Properties:
+              RestApiId:
+                Ref: financesAPI
+              Path: /transactions/categories/groups/filter
+              Method: POST
+              Auth:
+                Authorizers: lambdaAuthorizer
+        Role: !Sub arn:aws:iam::XXXXXXXXXXX:role/api..com
+  ApiUsersCreateDevelop:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/users/
+      FunctionName: ApiUsersCreateDevelop
+      Handler: create.lambdaHandler
+      Runtime: nodejs18.x
+      MemorySize: 128
+      Timeout: 180
+      Layers:
+        - !Ref sharedDependenciesLayer
+      Events:
+        ApiUsersCreateDevelop:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: financesAPI
+            Path: /users/
+            Method: POST
+            Auth:
+              Authorizers: lambdaAuthorizer
+      Role: !Sub arn:aws:iam::XXXXXXXXXXX:role/api..com
+  ApiUsersGetOneDevelop:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/users/
+      FunctionName: ApiUsersGetOneDevelop
+      Handler: getOne.lambdaHandler
+      Runtime: nodejs18.x
+      MemorySize: 128
+      Timeout: 180
+      Layers:
+        - !Ref sharedDependenciesLayer
+      Events:
+        ApiUsersGetOneDevelop:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: financesAPI
+            Path: /users/one
+            Method: GET
+            Auth:
+              Authorizers: lambdaAuthorizer
+      Role: !Sub arn:aws:iam::XXXXXXXXXXX:role/api..com
+  ApiUsersFirstTimeDevelop:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: ApiUsersFirstTimeDevelop
+      CodeUri: src/users/
+      Handler: firstTime.lambdaHandler
+      Runtime: nodejs18.x
+      MemorySize: 128
+      Timeout: 180
+      Layers:
+        - !Ref sharedDependenciesLayer
+      Events:
+        ApiUsersFirstTimeDevelop:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: financesAPI
+            Path: /users/first-time
+            Method: POST
+            Auth:
+              Authorizers: lambdaAuthorizer
+      Role: !Sub arn:aws:iam::XXXXXXXXXXX:role/api..com
+
+  #  Shared Layers
+  sharedDependenciesLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+        LayerName: -common-layer-develop
+        Description: Dependencies for sam app
+        ContentUri: dependencies/
+        CompatibleRuntimes:
+          - nodejs18.x
+        LicenseInfo: 'MIT'
+        RetentionPolicy: Retain
+

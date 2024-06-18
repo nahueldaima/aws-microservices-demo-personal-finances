@@ -1,0 +1,8 @@
+{
+  "name": "economies",
+  "version": "1.0.0",
+  "description": "Economies microservice",
+  "main": "getAll.js",
+  "author": "Nahuel Daima",
+  "license": "MIT"
+}

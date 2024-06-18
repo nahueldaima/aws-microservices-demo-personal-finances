@@ -1,0 +1,8 @@
+{
+  "name": "Balances",
+  "version": "1.0.0",
+  "description": "Balances microservice",
+  "main": "balanceTransactionsByCategories.js",
+  "author": "Nahuel Daima",
+  "license": "MIT"
+}

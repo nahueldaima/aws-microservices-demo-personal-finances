@@ -1,0 +1,8 @@
+{
+  "name": "transactionsCategoriesGroups",
+  "version": "1.0.0",
+  "description": "Transactions Categories Groups microservice",
+  "main": "filter.js",
+  "author": "Nahuel Daima",
+  "license": "MIT"
+}

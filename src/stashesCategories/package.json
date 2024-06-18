@@ -1,0 +1,8 @@
+{
+  "name": "stashesCategories",
+  "version": "1.0.0",
+  "description": "Stashes categories microservice",
+  "main": "getAll.js",
+  "author": "Nahuel Daima",
+  "license": "MIT"
+}

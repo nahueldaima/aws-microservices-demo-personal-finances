@@ -1,0 +1,10 @@
+{
+  "name": "auth",
+  "version": "1.0.0",
+  "description": "Login to retrieve valid token microservice",
+  "main": "login.js",
+  "author": "Nahuel Daima",
+  "license": "MIT",
+  "dependencies": {
+  }
+}
